@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEffect,useRef } from "react";
 import "./App.css";
 import { VscSend } from "react-icons/vsc";
-import { URL } from "./constants";
+import { URL, API_KEY } from "./constants";
 import Answer from "./components/Answer";
 import AvenLogo from "./components/AvenLogo";
 import AvenIntro from "./components/AvenIntro";
@@ -46,58 +46,74 @@ function App() {
   };
 
   const askQuestion = async () => {
-    if(!question){
-      return false;
-    }
-    const currentQuestion=question;
-    setResult((prev)=>[
-      ...prev,{
-        type:"q",
-        text:currentQuestion,
-      },
-    ]);
-      setQuestion("");
-      setLoading(true);
-    
-    try{
-    let response = await fetch(URL, {
+  if (!question.trim() || loading) return;
+
+  const currentQuestion = question;
+
+  // user question immediately show
+  setResult((prev) => [
+    ...prev,
+    {
+      type: "q",
+      text: currentQuestion,
+    },
+  ]);
+
+  setQuestion("");
+  setLoading(true);
+
+  try {
+    const response = await fetch(URL, {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json",
+        "x-goog-api-key": API_KEY,
       },
-      body: JSON.stringify(payload),
+
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: currentQuestion,
+              },
+            ],
+          },
+        ],
+      }),
     });
+
     if (!response.ok) {
-        throw new Error(" Sorry for the inconvinience caused ,Due to heavy request service unavailable at the moment .... Please try after some time ! ");
-      }
-
-    response = await response.json();
-
-    let dataString = response.candidates[0].content.parts[0].text;
-
-     setResult((prev) => [
-        ...prev,
-        {
-          type: "a",
-          text: dataString,
-        },
-      ]);
-    }
-    
-   catch (error) {
-
-      setResult((prev) => [
-        ...prev,
-        {
-          type: "error",
-          text: "Sorry for the inconvinience caused ,Due to heavy request service unavailable at the moment .Please try after some time ....",
-        },
-      ]);
-    } finally {
-      setLoading(false);
+      throw new Error("API request failed");
     }
 
-  };
+    const data = await response.json();
+
+    const dataString =
+      data.candidates[0].content.parts[0].text;
+
+    setResult((prev) => [
+      ...prev,
+      {
+        type: "a",
+        text: dataString,
+      },
+    ]);
+  } catch (error) {
+    console.log(error);
+
+    setResult((prev) => [
+      ...prev,
+      {
+        type: "error",
+        text: "Something went wrong. Please try again.",
+      },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>{showIntro ? (

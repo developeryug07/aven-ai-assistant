@@ -3,15 +3,12 @@ import { useEffect } from "react";
 const AvenIntro = ({ setUserName, setShowIntro }) => {
   useEffect(() => {
     const handleMessage = (event) => {
-      console.log("VISME MESSAGE:", event.data);
 
       if (event.data?.type === "vismeForms:submitSuccess") {
         const submittedData = event.data.submitSuccessData;
 
         const name =
           submittedData?.[0]?.value?.firstName?.value;
-
-        console.log("USER NAME:", name);
 
         if (name) {
           setUserName(name);
